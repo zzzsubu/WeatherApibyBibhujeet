@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WEATHER APP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Concert+One:wght@300&display=swap");
+      @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap");
+
+   @import url("https://fonts.googleapis.com/css2?family=Concert+One:wght@300&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap");
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+  text-transform: capitalize;
+  background: linear-gradient(
+      45deg,
+      rgba(183, 204, 248, 0.7),
+      rgba(7, 43, 127, 0.7)
+    ),
+    url("./background.jpg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+/* HEADER */
+h1 {
+  color: rgb(214, 147, 45);
+  text-decoration: underline;
+  font-family: "Orbitron", sans-serif;
+}
+
+/* SEARCH */
+.search-box {
+  max-width: 320px;
+}
+
+#input {
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: 20px 0 0 20px;
+}
+
+#search {
+  border-radius: 0 20px 20px 0;
+}
+
+/* CURRENT WEATHER */
+.weather {
+  text-align: center;
+  color: aliceblue;
+}
+
+#city {
+  font-size: 30px;
+}
+
+.weather img {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+}
+
+#temperature {
+  font-size: 48px;
+  margin-left: 20px;
+}
+
+.temp-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 30px 0;
+}
+
+#clouds {
+  font-size: 18px;
+  background: rgba(153, 205, 50, 0.8);
+  padding: 4px 18px;
+  border-radius: 15px;
+}
+
+/* DIVIDERS */
+.divider1 {
+  background: rgba(254, 189, 132, 0.6);
+  width: 6px;
+  height: 200px;
+  border-radius: 5px;
+  margin: auto;
+}
+
+.divider2 {
+  background: rgba(254, 189, 132, 0.6);
+  height: 5px;
+  width: 30%;
+  margin: 30px auto;
+  border-radius: 5px;
+}
+
+/* FORECAST */
+.cast-header {
+  background: rgba(254, 189, 132, 0.5);
+  padding: 6px 18px;
+  border-radius: 20px;
+  display: inline-block;
+  font-size: 18px;
+  margin-bottom: 12px;
+  color: white;
+}
+
+.next {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+  color: white;
+}
+
+.time,
+.date {
+  color: rgb(254, 189, 132);
+}
+
+.desc {
+  color: rgb(196, 255, 77);
+}
+
+.dayF {
+  color: aliceblue;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* RESPONSIVE FIXES */
+@media (max-width: 768px) {
+  .divider1 {
+    display: none;
+  }
+
+  #temperature {
+    font-size: 42px;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+}
+
+
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid main-bg">
+
+      <div class="d-flex justify-content-between align-items-center px-5 pt-4 gap-3">
+        <h1>WEATHER APP</h1>
+
+        <div class="input-group search-box">
+          <input
+            type="text"
+            id="input"
+            class="form-control"
+            placeholder="Enter City name..."
+          />
+          <button id="search" class="btn btn-success" onclick="searchClick()">
+            <i class="bi bi-search text-primary"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="row align-items-center px-5 mt-5">
+        <div class="col-md-5 weather">
+          <h2 id="city">Delhi, IN</h2>
+          <div class="temp-box">
+            <img id="iconImg" src="weathericon.png" alt="icon" />
+            <p id="temperature">26&deg;C</p>
+          </div>
+          <span id="clouds">Broken Clouds</span>
+        </div>
+
+        <div class="col-md-1 d-none d-md-block">
+          <div class="divider1"></div>
+        </div>
+
+        <div class="col-md-6">
+          <p class="cast-header">Upcoming Forecast</p>
+          <div class="templist"></div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="divider"></div>
+        <p class="cast-header">Next 4 days forecast</p>
+        <div class="row weekF"></div>
+      </div>
+    </div>
+<script>
+const API_KEY = "44ee064efc88e95b3f0f38332b2177da";
+
+/* LOAD DEFAULT / LOCATION */
+window.onload = () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      pos => loadByCoords(pos.coords.latitude, pos.coords.longitude),
+      () => loadByCity("Delhi")
+    );
+  } else {
+    loadByCity("Delhi");
+  }
+};
+
+/* FETCH BY COORDS */
+function loadByCoords(lat, lon) {
+  fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.cod !== 200) return;
+      updateCurrent(data);
+      loadForecast(data.name);
+    });
+}
+
+/* SEARCH */
+function searchClick() {
+  const city = document.getElementById("input").value.trim();
+  if (!city) return;
+  loadByCity(city);
+  document.getElementById("input").value = "";
+}
+
+/* FETCH BY CITY */
+function loadByCity(city) {
+  fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.cod !== 200) {
+        alert("City not found");
+        return;
+      }
+      updateCurrent(data);
+      loadForecast(data.name);
+    });
+}
+
+/* CURRENT WEATHER */
+function updateCurrent(data) {
+  document.getElementById("city").innerText =
+    `${data.name}, ${data.sys.country}`;
+
+  document.getElementById("temperature").innerText =
+    `${Math.round(data.main.temp - 273.15)}°C`;
+
+  document.getElementById("clouds").innerText =
+    data.weather[0].description;
+
+  document.getElementById("iconImg").src =
+    `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+}
+
+/* FORECAST */
+function loadForecast(city) {
+  fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_KEY}`)
+    .then(res => res.json())
+    .then(data => {
+      hourlyForecast(data);
+      dailyForecast(data);
+    });
+}
+
+/* HOURLY FORECAST (MATCHED FORMAT) */
+function hourlyForecast(forecast) {
+  const list = document.querySelector(".templist");
+  list.innerHTML = "";
+
+  for (let i = 0; i < 5; i++) {
+    const f = forecast.list[i];
+    const time = new Date(f.dt * 1000)
+      .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    list.innerHTML += `
+      <div class="next">
+        <div>
+          <p class="time">${time}</p>
+          <p>
+            ${Math.round(f.main.temp_max - 273.15)} °C /
+            ${Math.round(f.main.temp_min - 273.15)} °C
+          </p>
+        </div>
+        <p class="desc">${f.weather[0].description}</p>
+      </div>`;
+  }
+}
+
+/* 4-DAY FORECAST (MATCHED FORMAT) */
+function dailyForecast(forecast) {
+  const week = document.querySelector(".weekF");
+  week.innerHTML = "";
+
+  for (let i = 8; i < forecast.list.length; i += 8) {
+    const f = forecast.list[i];
+    const date = new Date(f.dt * 1000).toDateString();
+
+    week.innerHTML += `
+      <div class="col-md-3 dayF">
+        <p class="date">${date}</p>
+        <p>
+          ${Math.round(f.main.temp_max - 273.15)} °C /
+          ${Math.round(f.main.temp_min - 273.15)} °C
+        </p>
+        <p class="desc">${f.weather[0].description}</p>
+      </div>`;
+  }
+}
+</script>
+
+  </body>
+</html>
